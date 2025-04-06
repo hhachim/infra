@@ -68,7 +68,8 @@ HTTPS_PORT=443
 # Configuration du dashboard
 DASHBOARD_INSECURE=false
 TRAEFIK_USERNAME=admin
-# Généré avec: htpasswd -nb admin <votre_mot_de_passe>
+# Généré avec la commande Docker suivante:
+# docker run --rm httpd:alpine htpasswd -nb admin <votre_mot_de_passe>
 TRAEFIK_PASSWORD_HASH=xxxxxxxxxxxxxxxxxxxxxxxxxxxx
 
 # Configuration Let's Encrypt
