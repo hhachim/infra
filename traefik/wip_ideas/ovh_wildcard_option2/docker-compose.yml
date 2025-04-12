@@ -1,0 +1,55 @@
+services:
+  traefik:
+    image: traefik:${TRAEFIK_VERSION}
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    ports:
+      - ${HTTP_PORT}:80
+      - ${HTTPS_PORT}:443
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./data/config.yml:/etc/traefik/config.yml:ro
+      - ./data/acme.json:/etc/traefik/acme.json
+    environment:
+      # Variables d'environnement générales
+      - DOMAIN=${DOMAIN}
+      - TRAEFIK_SUBDOMAIN=${TRAEFIK_SUBDOMAIN}
+      - ACME_EMAIL=${ACME_EMAIL}
+      # Variables d'environnement spécifiques à OVH pour le DNS challenge
+      - OVH_ENDPOINT=${OVH_ENDPOINT:-ovh-eu}
+      - OVH_APPLICATION_KEY=${OVH_APPLICATION_KEY}
+      - OVH_APPLICATION_SECRET=${OVH_APPLICATION_SECRET}
+      - OVH_CONSUMER_KEY=${OVH_CONSUMER_KEY}
+    labels:
+      - "traefik.enable=true"
+      # Santé du service
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+      # Sécurité headers
+      - "traefik.http.middlewares.secure-headers.headers.browserXssFilter=true"
+      - "traefik.http.middlewares.secure-headers.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.secure-headers.headers.forceSTSHeader=true"
+      - "traefik.http.middlewares.secure-headers.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.secure-headers.headers.stsPreload=true"
+      - "traefik.http.middlewares.secure-headers.headers.stsSeconds=31536000"
+      # Configuration du tableau de bord
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.${DOMAIN}`)"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.tls=true"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.middlewares=auth"
+    networks:
+      - traefik
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+networks:
+  traefik:
+    name: traefik
+    external: false

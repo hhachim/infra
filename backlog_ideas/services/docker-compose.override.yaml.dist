@@ -1,0 +1,10 @@
+# Config Platform for Mac M1
+services:
+    mysql:
+        platform: linux/amd64
+    mysql80:
+        platform: linux/amd64
+    maildev:
+        environment:
+            MAILDEV_INCOMING_USER: smtp@chapsvision.com
+            MAILDEV_INCOMING_PASS: test

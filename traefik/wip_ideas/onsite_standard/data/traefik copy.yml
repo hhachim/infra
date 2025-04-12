@@ -1,0 +1,82 @@
+# Configuration statique globale
+global:
+  checkNewVersion: true
+  sendAnonymousUsage: false
+
+# Point d'entrée
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+      # Protection DDOS basique
+      middlewares:
+        - rate-limit
+  websecure:
+    address: ":443"
+    http:
+      middlewares:
+        - secure-headers
+      tls:
+        certResolver: myresolver
+
+# Protection basique contre les attaques DDOS
+http:
+  middlewares:
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+    secure-headers:
+      headers:
+        browserXssFilter: true
+        contentTypeNosniff: true
+        frameDeny: true
+        sslRedirect: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+
+# Configuration de la gestion des certificats avec Let's Encrypt
+certificatesResolvers:
+  myresolver:
+    acme:
+      email: ${ACME_EMAIL}
+      storage: /etc/traefik/acme.json
+      httpChallenge:
+        entryPoint: web
+
+# Active l'API et le tableau de bord
+api:
+  dashboard: true
+  insecure: false
+
+# Configuration des providers
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    network: traefik
+    swarmMode: false
+  file:
+    filename: /etc/traefik/config.yml
+    watch: true
+
+# Active les logs
+log:
+  level: INFO
+  format: json
+  filePath: /var/log/traefik.log
+
+# Active les métriques et la supervision
+metrics:
+  prometheus:
+    buckets:
+      - 0.1
+      - 0.3
+      - 1.2
+      - 5.0
+    addServicesLabels: true

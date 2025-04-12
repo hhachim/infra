@@ -1,0 +1,34 @@
+version: '3'
+
+services:
+  # Service d'exemple à déployer avec Traefik
+  mon-service:
+    image: nginx:alpine  # À remplacer par votre image
+    container_name: mon-service
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Paris
+    volumes:
+      - ./data:/usr/share/nginx/html:ro
+    networks:
+      - traefik
+    labels:
+      - "traefik.enable=true"
+      # Configuration du routeur HTTP
+      - "traefik.http.routers.mon-service.rule=Host(`service.${DOMAIN}`)"
+      - "traefik.http.routers.mon-service.entrypoints=websecure"
+      - "traefik.http.routers.mon-service.tls=true"
+      - "traefik.http.routers.mon-service.tls.certresolver=myresolver"
+      # Configuration du service
+      - "traefik.http.services.mon-service.loadbalancer.server.port=80"
+      # Middlewares pour la sécurité
+      - "traefik.http.routers.mon-service.middlewares=secure-headers@file"
+      # Pour activer l'authentification basique (optionnel)
+      # - "traefik.http.routers.mon-service.middlewares=auth@file"
+      # Pour la compression
+      - "traefik.http.middlewares.mon-service-compress.compress=true"
+      - "traefik.http.routers.mon-service.middlewares=mon-service-compress"
+
+networks:
+  traefik:
+    external: true  # Se connecte au réseau traefik existant

@@ -1,0 +1,91 @@
+version: '3'
+
+services:
+  # Nginx Proxy Manager pour HTTP/HTTPS
+  npm:
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    ports:
+      - '80:80'   # HTTP
+      - '443:443' # HTTPS
+      - '81:81'   # Interface d'administration NPM
+    volumes:
+      - ${DATA_PATH_HOST}/npm/data:/data
+      - ${DATA_PATH_HOST}/npm/letsencrypt:/etc/letsencrypt
+    networks:
+      - frontend
+      - backend
+    environment:
+      - DISABLE_IPV6=true
+
+  # HAProxy pour MySQL et autres services TCP
+  haproxy:
+    build:
+      context: ./haproxy
+    restart: unless-stopped
+    ports:
+      - '3306:3306'  # MySQL
+      - '6379:6379'  # Redis (exemple)
+      - '22:2222'    # SFTP (exemple, redirigé vers port 2222)
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+    networks:
+      - frontend
+      - backend
+
+  # MySQL 1
+  mysql:
+    build:
+      context: ./laradock/mysql
+      args:
+        - MYSQL_VERSION=${MYSQL_VERSION}
+    environment:
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - TZ=${WORKSPACE_TIMEZONE}
+    volumes:
+      - ${DATA_PATH_HOST}/mysql:/var/lib/mysql
+      - ${MYSQL_ENTRYPOINT_INITDB}:/docker-entrypoint-initdb.d
+    networks:
+      - backend
+
+  # MySQL 2
+  mysql2:
+    build:
+      context: ./laradock/mysql
+      args:
+        - MYSQL_VERSION=${MYSQL2_VERSION}
+    environment:
+      - MYSQL_DATABASE=${MYSQL2_DATABASE}
+      - MYSQL_USER=${MYSQL2_USER}
+      - MYSQL_PASSWORD=${MYSQL2_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - TZ=${WORKSPACE_TIMEZONE}
+    volumes:
+      - ${DATA_PATH_HOST}/mysql2:/var/lib/mysql
+      - ${MYSQL_ENTRYPOINT_INITDB}:/docker-entrypoint-initdb.d
+    networks:
+      - backend
+
+  # Portainer (géré via Nginx Proxy Manager)
+  portainer:
+    build:
+      context: ./laradock/portainer
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${DATA_PATH_HOST}/portainer_data:/data
+    # Port exposé sur le réseau interne seulement (NPM y accédera)
+    expose:
+      - "9000"
+    networks:
+      - frontend
+      - backend
+    restart: always
+
+networks:
+  frontend:
+    driver: "bridge"
+  backend:
+    driver: "bridge"

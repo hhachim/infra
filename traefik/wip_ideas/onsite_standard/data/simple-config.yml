@@ -1,0 +1,8 @@
+# simple-config.yml
+http:
+  routers:
+    dashboard:
+      rule: "Host(`traefik.pocs.hachim.fr`)"
+      service: "api@internal"
+      tls:
+        certResolver: myresolver
