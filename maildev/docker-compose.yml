@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  maildev:
+    image: maildev/maildev:latest
+    container_name: maildev
+    networks:
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.maildev.rule=Host(`maildev.pocs.hachim.fr`)"
+      - "traefik.http.routers.maildev.entrypoints=websecure"
+      - "traefik.http.routers.maildev.tls=true"
+      - "traefik.http.routers.maildev.tls.certresolver=myresolver"
+      - "traefik.http.services.maildev.loadbalancer.server.port=1080"
+    ports:
+      - "${SMTP_PORT:-1025}:1025" # SMTP port
+      - "${WEB_PORT:-1080}:1080" # Web UI port
+    environment:
+      MAILDEV_INCOMING_USER: "${SMTP_USER}" # SMTP username
+      MAILDEV_INCOMING_PASS: "${SMTP_PASS}" # SMTP password
+      MAILDEV_WEB_USER: "${WEB_USER}"   # Web UI username
+      MAILDEV_WEB_PASS: "${WEB_PASS}"   # Web UI password
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.http.routers.maildev.rule=Host(`maildev.pocs.hachim.fr`)"
+    #   - "traefik.http.routers.maildev.entrypoints=web"
+    #   - "traefik.http.services.maildev.loadbalancer.server.port=1080"
+    env_file:
+      - .env
+    restart: unless-stopped
+
+networks:
+  traefik_network:
+    external: true
+    name: TraefikNetwork_wildcard.pocs.hachim.fr
