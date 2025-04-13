@@ -9,15 +9,15 @@ services:
       - ${PWD}/users.conf:/etc/sftp/users.conf:ro
       - ${PWD}/upload:/home/sftpdata/upload:rw
       - ${PWD}/sshAuthorizedkeys/hachim_mac_id_rsa.pub:/home/sftpdata/.ssh/keys/hachim_mac_id_rsa.pub:ro
-    # ports:
-    #   - "2222:22"
-    environment:
-      - SFTP_HOSTNAME=sftp.pocs.hachim.fr
-    labels:
-      - "traefik.enable=true"
-      - "traefik.tcp.routers.sftp.rule=HostSNI(`sftp.pocs.hachim.fr`)"
-      - "traefik.tcp.routers.sftp.entrypoints=sftp"
-      - "traefik.tcp.services.sftp.loadbalancer.server.port=22"
+    ports:
+      - "2222:22"
+    # environment:
+    #   - SFTP_HOSTNAME=sftp.pocs.hachim.fr
+    # labels:
+    #   - "traefik.enable=true"
+    #   - "traefik.tcp.routers.sftp.rule=HostSNI(`sftp.pocs.hachim.fr`)"
+    #   - "traefik.tcp.routers.sftp.entrypoints=sftp"
+    #   - "traefik.tcp.services.sftp.loadbalancer.server.port=22"
     networks:
       - traefik_network
 networks:
