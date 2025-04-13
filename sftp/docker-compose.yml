@@ -9,8 +9,8 @@ services:
       - ${PWD}/users.conf:/etc/sftp/users.conf:ro
       - ${PWD}/upload:/home/sftpdata/upload:rw
       - ${PWD}/sshAuthorizedkeys/hachim_mac_id_rsa.pub:/home/sftpdata/.ssh/keys/hachim_mac_id_rsa.pub:ro
-    ports:
-      - "8022:22"
+    # ports:
+    #   - "2222:22"
     environment:
       - SFTP_HOSTNAME=sftp.pocs.hachim.fr
     labels:
